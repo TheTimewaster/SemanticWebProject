@@ -4,9 +4,9 @@ import java.io.UnsupportedEncodingException;
 
 import org.jsoup.nodes.Element;
 
-import web.crawler.WebCrawler;
-import web.pages.WikipediaParser;
-import web.parser.HtmlParser;
+import web.parsing.HtmlParser;
+import web.resources.impl.WikipediaTableResource;
+import web.workflow.WorkflowController;
 
 public class Main
 {
@@ -15,24 +15,8 @@ public class Main
 	public static void main(String[] args)
 	{
 		// TODO get uris from configuration
-		WebCrawler crawler = new WebCrawler(TEST_URI);
-		
-		try
-		{
-			String responseContent = crawler.executeRequest();
-			
-			HtmlParser parser = new HtmlParser();
-			Element element = parser.parseHtmlString(responseContent);
-			
-			WikipediaParser wikiparser = new WikipediaParser(element);
-			wikiparser.extractData();
-		} 
-		catch (UnsupportedEncodingException e)
-		{
-			//TODO: log this exception
-			e.printStackTrace();
-		}
-		
+		WorkflowController crawler = new WorkflowController();
+		crawler.executeWorkflows();
 		
 	}
 }
