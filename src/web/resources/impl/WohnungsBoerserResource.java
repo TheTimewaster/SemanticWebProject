@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -32,9 +33,9 @@ public class WohnungsBoerserResource extends SingleWebResource
 	private Element rootElement;
 
 	@Override
-	public ResultMap extractData()
+	public ResultMap getData()
 	{
-		if (rootElement == null)
+		if ( rootElement == null )
 		{
 			return null;
 		}
@@ -45,19 +46,19 @@ public class WohnungsBoerserResource extends SingleWebResource
 		Elements tableRows = table.select("tr");
 
 		// iterate through table rows
-		for (Element tableRow : tableRows)
+		for ( Element tableRow : tableRows )
 		{
 			Elements tableColumns = tableRow.getElementsByTag("td");
 
-			if ((tableColumns.size() % 2) == 0)
+			if ( (tableColumns.size() % 2) == 0 )
 			{
-				for (int i = 0; i < tableColumns.size(); i = i + 2)
-				{	
+				for ( int i = 0; i < tableColumns.size(); i = i + 2 )
+				{
 					String district = tableColumns.get(i).text();
 					String value = tableColumns.get(i + 1).text();
 					List<Object> values = new ArrayList<Object>();
 					values.add(value);
-					
+
 					results.put(district, values);
 				}
 			}
@@ -74,10 +75,12 @@ public class WohnungsBoerserResource extends SingleWebResource
 		{
 			executeRequest(REQUEST_URL, out);
 			executeGeneralWorkflow(out);
-		} catch (Exception e)
+		}
+		catch (Exception e)
 		{
 			executeFallback();
-		} finally
+		}
+		finally
 		{
 			out.close();
 		}
@@ -92,7 +95,8 @@ public class WohnungsBoerserResource extends SingleWebResource
 			input = new FileInputStream(new File(LOCAL_RESOURCE));
 			IOUtils.copy(input, out);
 			executeGeneralWorkflow(out);
-		} catch (IOException e)
+		}
+		catch (IOException e)
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -104,13 +108,13 @@ public class WohnungsBoerserResource extends SingleWebResource
 		try
 		{
 			String contentString = new String(out.toByteArray(), "UTF-8");
-			rootElement = (Element) ResourceParser.parseResource(contentString, WebResourceType.HTML_DOC);
-			
-			ResultMap resultMap = extractData();
-			
+			rootElement = (Element) ResourceParser.parseResource(contentString,
+					WebResourceType.HTML_DOC);
+
+			ResultMap resultMap = getData();
+
 			resultMap.writeToFile("foo.bar", false);
-			
-		} 
+		}
 		catch (IOException e)
 		{
 			e.printStackTrace();

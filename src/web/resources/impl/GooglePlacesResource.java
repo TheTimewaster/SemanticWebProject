@@ -31,20 +31,22 @@ public class GooglePlacesResource extends SingleWebResource
 
 	private JSONObject _gPlacesObj;
 
-	public GooglePlacesResource()
-	{
-		super();
-	}
-
 	@Override
-	public ResultMap extractData()
+	public void startWorkflow() throws Exception
 	{
-		ResultMap resultMap = new ResultMap();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		executeRequest(URL, out);
+
+		String response = new String(out.toByteArray(), "UTF-8");
+
+		_gPlacesObj = (JSONObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
+
+		_data = new ResultMap();
 		JSONArray array = (JSONArray) _gPlacesObj.get("results");
 
 		int i = 0;
 
-		for (Object placeEntry : array)
+		for ( Object placeEntry : array )
 		{
 			JSONObject placeObject = (JSONObject) placeEntry;
 			String name = placeObject.get("name").toString();
@@ -53,49 +55,9 @@ public class GooglePlacesResource extends SingleWebResource
 			List<Object> valueList = new ArrayList<Object>();
 			valueList.add(name);
 			valueList.add(adress);
-			resultMap.put(Integer.toString(i), valueList);
+			_data.put(Integer.toString(i), valueList);
 			i++;
 		}
-
-		return resultMap;
 	}
 
-	@Override
-	public void startWorkflow() throws Exception
-	{
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		executeRequest(URL, out);
-		
-		String response = new String(out.toByteArray(), "UTF-8");
-		
-		_gPlacesObj = (JSONObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
-		
-		Map<String,List<Object>> results = extractData();
-		
-		File toWriteFile = new File("/Users/Tu/Desktop/places.txt");
-		toWriteFile.createNewFile();
-		FileWriter writer = new FileWriter(toWriteFile);
-		StringBuilder builder = new StringBuilder();
-		
-		Iterator<String> it = results.keySet().iterator();
-		
-		while(it.hasNext())
-		{
-			String key =  it.next();
-			String line = key + ";";
-			List<Object> values = results.get(key);
-			
-			for(Object o : values)
-			{
-				line += o.toString();
-			}
-			
-			builder.append(line + "\r\n");
-		}
-		
-		writer.write(builder.toString());
-		
-		writer.close();
-	}
-	
 }

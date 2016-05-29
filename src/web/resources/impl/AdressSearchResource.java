@@ -27,14 +27,6 @@ public class AdressSearchResource extends SingleWebResource
 	private Element _document;
 
 	@Override
-	public ResultMap extractData()
-	{
-		ResultMap results = new ResultMap();
-
-		return null;
-	}
-
-	@Override
 	public void startWorkflow() throws Exception
 	{
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -59,7 +51,7 @@ public class AdressSearchResource extends SingleWebResource
 
 		_document = (Element) ResourceParser.parseResource(response, WebResourceType.HTML_DOC);
 
-		ResultMap results = extractData();
+		ResultMap results = getData();
 	}
 
 	private void executeFallback(OutputStream out)
@@ -79,7 +71,7 @@ public class AdressSearchResource extends SingleWebResource
 
 	public void executeGeneralWorkflow(ByteArrayOutputStream out)
 	{
-		
+
 	}
 
 }

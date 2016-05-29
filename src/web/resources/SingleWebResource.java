@@ -22,6 +22,7 @@ import data.ResultMap;
 public abstract class SingleWebResource
 {
 	protected String _url;
+	protected ResultMap _data;
 
 	protected void executeRequest(String url, OutputStream out) throws ClientProtocolException,
 			IOException
@@ -53,7 +54,10 @@ public abstract class SingleWebResource
 		IOUtils.copy(is, out);
 	}
 
-	public abstract ResultMap extractData();
+	public ResultMap getData()
+	{
+		return _data;
+	}
 
 	public abstract void startWorkflow() throws Exception;
 
