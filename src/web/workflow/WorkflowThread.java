@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import web.resources.SingleWebResource;
 import web.resources.impl.GooglePlacesResource;
 import web.resources.impl.WikipediaTableResource;
+import web.resources.impl.WohnungsBoerserResource;
 
 public class WorkflowThread implements Runnable
 {
@@ -20,13 +21,15 @@ public class WorkflowThread implements Runnable
 	@Override
 	public void run()
 	{
-		SingleWebResource wikipediaResource = new WikipediaTableResource();
-		SingleWebResource googlePlacesResource = new GooglePlacesResource();
+//		SingleWebResource wikipediaResource = new WikipediaTableResource();
+//		SingleWebResource googlePlacesResource = new GooglePlacesResource();
+		SingleWebResource wohnungsBoerseResource = new WohnungsBoerserResource();
 		
 		try
 		{
-			wikipediaResource.startWorkflow();
-			googlePlacesResource.startWorkflow();
+//			wikipediaResource.startWorkflow();
+//			googlePlacesResource.startWorkflow();
+			wohnungsBoerseResource.startWorkflow();
 		} 
 		catch (Exception e)
 		{

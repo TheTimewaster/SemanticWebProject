@@ -1,61 +1,60 @@
 package web.resources;
 
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.Charset;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.jsoup.nodes.Element;
 
-import web.parsing.HtmlParser;
+import data.ResultMap;
 
 
 public abstract class SingleWebResource
-{	
+{
 	protected String _url;
-	
-	protected void executeRequest(String url, OutputStream out)
+
+	protected void executeRequest(String url, OutputStream out) throws ClientProtocolException,
+			IOException
 	{
 		HttpClient client = HttpClientBuilder.create().build();
 		HttpGet getRequest;
-		
-		try
-		{
-			getRequest = new HttpGet(url);
-			
-			HttpResponse response = client.execute(getRequest);
-			
-			InputStream is = response.getEntity().getContent();
-			IOUtils.copy(is, out);
-		} 
-		catch (ClientProtocolException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		catch (IOException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+		getRequest = new HttpGet(url);
+
+		HttpResponse response = client.execute(getRequest);
+
+		InputStream is = response.getEntity().getContent();
+		IOUtils.copy(is, out);
 	}
 
-	public abstract Map<String, List<Object>> extractData();
-	
+	protected void executePostRequest(String url, OutputStream out, String requestBody)
+			throws ClientProtocolException, IOException
+	{
+		HttpClient client = HttpClientBuilder.create().build();
+
+		HttpPost postRequest = new HttpPost(url);
+		HttpEntity entity = new ByteArrayEntity(requestBody.getBytes(Charset.forName("UTF-8")));
+
+		postRequest.setEntity(entity);
+
+		HttpResponse response = client.execute(postRequest);
+
+		InputStream is = response.getEntity().getContent();
+		IOUtils.copy(is, out);
+	}
+
+	public abstract ResultMap extractData();
+
 	public abstract void startWorkflow() throws Exception;
 
 	public enum WebResourceType

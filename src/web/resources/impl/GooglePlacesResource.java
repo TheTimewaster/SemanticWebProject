@@ -13,6 +13,7 @@ import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import data.ResultMap;
 import web.parsing.ResourceParser;
 import web.resources.SingleWebResource;
 
@@ -36,9 +37,9 @@ public class GooglePlacesResource extends SingleWebResource
 	}
 
 	@Override
-	public Map<String, List<Object>> extractData()
+	public ResultMap extractData()
 	{
-		Map<String, List<Object>> resultMap = new HashMap<String, List<Object>>();
+		ResultMap resultMap = new ResultMap();
 		JSONArray array = (JSONArray) _gPlacesObj.get("results");
 
 		int i = 0;
@@ -96,5 +97,5 @@ public class GooglePlacesResource extends SingleWebResource
 		
 		writer.close();
 	}
-
+	
 }

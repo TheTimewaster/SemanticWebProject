@@ -12,6 +12,7 @@ import java.util.Map;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import data.ResultMap;
 import web.parsing.ResourceParser;
 import web.resources.SingleWebResource;
 
@@ -21,15 +22,10 @@ public class WikipediaTableResource extends SingleWebResource
 	
 	private Element _document;
 
-	public WikipediaTableResource()
-	{
-		super();
-	}
-
 	@Override
-	public Map<String,List<Object>> extractData()
+	public ResultMap extractData()
 	{
-		Map<String, List<Object>> resultMap = new HashMap<String, List<Object>>();
+		ResultMap resultMap = new ResultMap();
 		
 		Element document = _document;
 		
