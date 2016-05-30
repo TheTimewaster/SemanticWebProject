@@ -17,11 +17,11 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.9.1</version>
 		</dependency>
-		<!-- Simple JSON (for license reasons) -->
+		<!-- GSON (for license reasons) -->
 		<dependency>
-			<groupId>com.googlecode.json-simple</groupId>
-			<artifactId>json-simple</artifactId>
-			<version>1.1.1</version>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.6.2</version>
 		</dependency>
 		<!-- Commons IO for IO operations -->
 		<dependency>
@@ -29,7 +29,7 @@
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
 		</dependency>
-		<!-- http://mvnrepository.com/artifact/org.apache.jena/jena-core -->
+		<!-- core library for rdf -->
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-core</artifactId>

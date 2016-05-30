@@ -14,6 +14,13 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.impl.PropertyImpl;
+import org.apache.jena.vocabulary.OWL;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.VCARD;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -26,44 +33,15 @@ import web.resources.SingleWebResource.WebResourceType;
 
 public class WohnungsBoerserResource extends SingleWebResource
 {
-	private static final String REQUEST_URL = "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
+	private static final String	REQUEST_URL		= "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
 
-	private static final String LOCAL_RESOURCE = "/Users/Tu/Documents/Hochschule/Master/Semantic Web/doc.htm";
+	private static final String	LOCAL_RESOURCE	= "/Users/Tu/Documents/Hochschule/Master/Semantic Web/doc.htm";
 
-	private Element rootElement;
+	Model						_model;
 
-	@Override
-	public ResultMap getData()
+	public WohnungsBoerserResource(Model model)
 	{
-		if ( rootElement == null )
-		{
-			return null;
-		}
-
-		ResultMap results = new ResultMap();
-
-		Element table = rootElement.select(".rentindexDistrict_table").get(0);
-		Elements tableRows = table.select("tr");
-
-		// iterate through table rows
-		for ( Element tableRow : tableRows )
-		{
-			Elements tableColumns = tableRow.getElementsByTag("td");
-
-			if ( (tableColumns.size() % 2) == 0 )
-			{
-				for ( int i = 0; i < tableColumns.size(); i = i + 2 )
-				{
-					String district = tableColumns.get(i).text();
-					String value = tableColumns.get(i + 1).text();
-					List<Object> values = new ArrayList<Object>();
-					values.add(value);
-
-					results.put(district, values);
-				}
-			}
-		}
-		return results;
+		_model = model;
 	}
 
 	@Override
@@ -78,10 +56,13 @@ public class WohnungsBoerserResource extends SingleWebResource
 		}
 		catch (Exception e)
 		{
+			out = new ByteArrayOutputStream();
 			executeFallback();
+			executeGeneralWorkflow(out);
 		}
 		finally
 		{
+			out.flush();
 			out.close();
 		}
 	}
@@ -108,12 +89,34 @@ public class WohnungsBoerserResource extends SingleWebResource
 		try
 		{
 			String contentString = new String(out.toByteArray(), "UTF-8");
-			rootElement = (Element) ResourceParser.parseResource(contentString,
-					WebResourceType.HTML_DOC);
+			Element rootElement = (Element) ResourceParser.parseResource(contentString, WebResourceType.HTML_DOC);
 
-			ResultMap resultMap = getData();
+			_data = new ResultMap();
 
-			resultMap.writeToFile("foo.bar", false);
+			Element table = rootElement.select(".rentindexDistrict_table").get(0);
+			Elements tableRows = table.select("tr");
+
+			// iterate through table rows
+			for ( Element tableRow : tableRows )
+			{
+				Elements tableColumns = tableRow.getElementsByTag("td");
+
+				if ( (tableColumns.size() % 2) == 0 )
+				{
+					for ( int i = 0; i < tableColumns.size(); i = i + 2 )
+					{
+						String district = tableColumns.get(i).text();
+						String value = tableColumns.get(i + 1).text();
+						List<Object> values = new ArrayList<Object>();
+						values.add(value);
+
+						Resource districtResource = _model.createResource(district);
+						districtResource.addProperty(ResourceFactory.createProperty("district"), district);
+						
+					}
+				}
+			}
+
 		}
 		catch (IOException e)
 		{

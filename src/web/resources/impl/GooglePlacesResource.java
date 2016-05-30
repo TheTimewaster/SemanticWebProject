@@ -2,16 +2,11 @@ package web.resources.impl;
 
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import data.ResultMap;
 import web.parsing.ResourceParser;
@@ -27,9 +22,9 @@ import web.resources.SingleWebResource;
  */
 public class GooglePlacesResource extends SingleWebResource
 {
-	private static final String URL = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=bioladen+in+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
+	private static final String	URL	= "https://maps.googleapis.com/maps/api/place/textsearch/json?query=bioladen+in+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
 
-	private JSONObject _gPlacesObj;
+	private JsonObject			_gPlacesObj;
 
 	@Override
 	public void startWorkflow() throws Exception
@@ -39,25 +34,57 @@ public class GooglePlacesResource extends SingleWebResource
 
 		String response = new String(out.toByteArray(), "UTF-8");
 
-		_gPlacesObj = (JSONObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
+		_gPlacesObj = (JsonObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
 
 		_data = new ResultMap();
-		JSONArray array = (JSONArray) _gPlacesObj.get("results");
+		JsonArray array = _gPlacesObj.getAsJsonArray("results");
 
 		int i = 0;
 
 		for ( Object placeEntry : array )
 		{
-			JSONObject placeObject = (JSONObject) placeEntry;
-			String name = placeObject.get("name").toString();
-			String adress = placeObject.get("formatted_address").toString();
+			JsonObject placeObject = (JsonObject) placeEntry;
+			String name = placeObject.get("name").getAsString();
+			String adress = placeObject.get("formatted_address").getAsString();
+
+			String lat = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lat").getAsString();
+			String lng = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lng").getAsString();
 
 			List<Object> valueList = new ArrayList<Object>();
 			valueList.add(name);
 			valueList.add(adress);
+			valueList.add(lat);
+			valueList.add(lng);
+
+			String district = searchForDistrict(Double.valueOf(lat), Double.valueOf(lng));
+
+			if ( district != null )
+			{
+				valueList.add(district);
+			}
+
 			_data.put(Integer.toString(i), valueList);
 			i++;
+
+			System.out.println(valueList);
 		}
+	}
+
+	private String searchForDistrict(double lat, double lng)
+	{
+		SingleWebResource districtSearchResource = new GoogleGeocodingResource(lat, lng);
+
+		try
+		{
+			districtSearchResource.startWorkflow();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+
+		return districtSearchResource.getData().get("district").get(0).toString();
 	}
 
 }

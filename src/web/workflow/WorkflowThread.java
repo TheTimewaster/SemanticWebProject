@@ -1,36 +1,25 @@
 package web.workflow;
 
-import java.io.OutputStream;
 
 import web.resources.SingleWebResource;
-import web.resources.impl.GooglePlacesResource;
-import web.resources.impl.WikipediaTableResource;
-import web.resources.impl.WohnungsBoerserResource;
+
 
 public class WorkflowThread implements Runnable
 {
-	String _uri;
+	SingleWebResource _source;
 	
-	OutputStream _out;
-	
-	public WorkflowThread(OutputStream out)
+	public WorkflowThread(SingleWebResource source)
 	{
-		_out = out;
+		_source = source;
 	}
 
 	@Override
 	public void run()
 	{
-//		SingleWebResource wikipediaResource = new WikipediaTableResource();
-//		SingleWebResource googlePlacesResource = new GooglePlacesResource();
-		SingleWebResource wohnungsBoerseResource = new WohnungsBoerserResource();
-		
 		try
 		{
-//			wikipediaResource.startWorkflow();
-//			googlePlacesResource.startWorkflow();
-			wohnungsBoerseResource.startWorkflow();
-		} 
+			_source.startWorkflow();
+		}
 		catch (Exception e)
 		{
 			e.printStackTrace();

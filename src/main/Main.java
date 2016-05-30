@@ -16,7 +16,6 @@ public class Main
 	{
 		// TODO get uris from configuration
 		WorkflowController crawler = new WorkflowController();
-		crawler.executeWorkflows();
-		
+		crawler.executeWorkflows();	
 	}
 }

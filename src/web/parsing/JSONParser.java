@@ -1,13 +1,17 @@
 package web.parsing;
 
-import org.json.simple.JSONObject;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 
 public class JSONParser
 {
-	public JSONObject parseRawJson(String rawJson)
+	public JsonObject parseRawJson(String rawJson)
 	{
-		
-		 return null;
+		JsonParser parser = new JsonParser();
+
+		return (JsonObject) parser.parse(rawJson);
 	}
 
 }

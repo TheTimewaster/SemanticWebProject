@@ -6,18 +6,24 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+
+import web.resources.impl.GooglePlacesResource;
+import web.resources.impl.WohnungsBoerserResource;
+
 
 /**
- * The WorkflowController should run multiple Threads to crawl and parse data to save
- * time. There should be no problem to sent multiple web requests to multiple
- * targets. The targets should come from a configuration file (JSON or config
- * maybe?).
+ * The WorkflowController should run multiple Threads to crawl and parse data to
+ * save time. There should be no problem to sent multiple web requests to
+ * multiple targets. The targets should come from a configuration file (JSON or
+ * config maybe?).
  */
 public class WorkflowController
 {
-	ByteArrayOutputStream _stream;
+	ByteArrayOutputStream	_stream;
 
-	List<WorkflowThread> _threads;
+	List<WorkflowThread>	_threads;
 
 	/**
 	 * Single uri constructor
@@ -29,8 +35,13 @@ public class WorkflowController
 		_stream = new ByteArrayOutputStream();
 		_threads = new ArrayList<WorkflowThread>();
 
-		WorkflowThread workflowThread = new WorkflowThread(_stream);
-		_threads.add(workflowThread);
+		Model model = ModelFactory.createDefaultModel();
+
+		WorkflowThread workflowThread1 = new WorkflowThread(new WohnungsBoerserResource(model));
+		WorkflowThread workflowThread2 = new WorkflowThread(new GooglePlacesResource());
+
+		_threads.add(workflowThread1);
+		_threads.add(workflowThread2);
 	}
 
 	/**
@@ -40,10 +51,7 @@ public class WorkflowController
 	 */
 	public WorkflowController(List<String> uris)
 	{
-		for (String uri : uris)
-		{
-			
-		}
+
 	}
 
 	/**
@@ -55,7 +63,7 @@ public class WorkflowController
 	 */
 	public void executeWorkflows()
 	{
-		for (WorkflowThread thread : _threads)
+		for ( WorkflowThread thread : _threads )
 		{
 			thread.run();
 		}
