@@ -1,10 +1,10 @@
-package web.resources.impl;
+package proj.web.resources.imp;
 
 
 import java.io.ByteArrayOutputStream;
 
-import web.resources.SingleWebResource;
-import web.workflow.WorkflowInterruptedException;
+import proj.web.resources.SingleWebResource;
+import proj.web.workflow.WorkflowInterruptedException;
 
 
 public class OsmOverpassResource extends SingleWebResource

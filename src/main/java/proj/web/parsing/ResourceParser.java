@@ -1,9 +1,11 @@
-package web.parsing;
+package proj.web.parsing;
 
 
 import org.jsoup.nodes.Element;
 
-import web.resources.SingleWebResource.WebResourceType;
+import proj.web.parsing.HtmlParser;
+import proj.web.parsing.JSONParser;
+import proj.web.resources.SingleWebResource.WebResourceType;
 
 
 public class ResourceParser

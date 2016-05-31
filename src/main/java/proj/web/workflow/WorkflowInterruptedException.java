@@ -1,4 +1,4 @@
-package web.workflow;
+package proj.web.workflow;
 
 public class WorkflowInterruptedException extends Throwable
 {

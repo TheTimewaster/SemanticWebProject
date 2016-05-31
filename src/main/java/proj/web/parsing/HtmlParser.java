@@ -1,4 +1,4 @@
-package web.parsing;
+package proj.web.parsing;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;

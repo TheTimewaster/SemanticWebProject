@@ -1,7 +1,8 @@
-package web.workflow;
+package proj.web.workflow;
 
 
-import web.resources.SingleWebResource;
+import proj.web.resources.SingleWebResource;
+import proj.web.workflow.WorkflowInterruptedException;
 
 
 public class WorkflowThread implements Runnable

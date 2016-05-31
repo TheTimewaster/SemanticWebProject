@@ -1,4 +1,4 @@
-package web.resources.impl;
+package proj.web.resources.imp;
 
 
 import java.io.ByteArrayOutputStream;
@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import proj.data.ResultMap;
+import proj.web.parsing.ResourceParser;
+import proj.web.resources.SingleWebResource;
+import proj.web.workflow.WorkflowInterruptedException;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
-import data.ResultMap;
-import web.parsing.ResourceParser;
-import web.resources.SingleWebResource;
-import web.workflow.WorkflowInterruptedException;
 
 
 public class GoogleGeocodingResource extends SingleWebResource

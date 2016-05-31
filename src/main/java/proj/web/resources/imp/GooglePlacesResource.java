@@ -1,4 +1,4 @@
-package web.resources.impl;
+package proj.web.resources.imp;
 
 
 import java.io.ByteArrayOutputStream;
@@ -6,13 +6,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+
+import proj.data.ResultMap;
+import proj.data.StaticProperties;
+import proj.web.parsing.ResourceParser;
+import proj.web.resources.SingleWebResource;
+import proj.web.resources.SingleWebResource.WebResourceType;
+import proj.web.resources.imp.GoogleGeocodingResource;
+import proj.web.workflow.WorkflowInterruptedException;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
-import data.ResultMap;
-import web.parsing.ResourceParser;
-import web.resources.SingleWebResource;
-import web.workflow.WorkflowInterruptedException;
 
 
 /**
@@ -24,17 +30,25 @@ import web.workflow.WorkflowInterruptedException;
  */
 public class GooglePlacesResource extends SingleWebResource
 {
-	private static final String		URL			= "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
+	private static final String	  URL	     = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
 
 	private static final String[]	KEYWORDS	=
-	{ "supermarkt", "bioladen", "discounter" };
+	                                         { "supermarkt", "bioladen", "discounter" };
 
-	// private JsonObject _gPlacesObj;
+	private Model	              _model;
+
+	public GooglePlacesResource(Model model)
+	{
+		super();
+		_model = model;
+	}
 
 	@Override
 	public void startWorkflow() throws WorkflowInterruptedException
 	{
 		_data = new ResultMap();
+		
+		int i = 0;
 
 		for ( String keyword : KEYWORDS )
 		{
@@ -52,10 +66,8 @@ public class GooglePlacesResource extends SingleWebResource
 
 				JsonArray array = gPlacesObj.getAsJsonArray("results");
 
-				int i = 0;
-
 				for ( Object placeEntry : array )
-				{
+				{		
 					JsonObject placeObject = (JsonObject) placeEntry;
 					String name = placeObject.get("name").getAsString();
 					String adress = placeObject.get("formatted_address").getAsString();
@@ -78,10 +90,13 @@ public class GooglePlacesResource extends SingleWebResource
 						valueList.add(district);
 					}
 
-					tmpData.put(Integer.toString(i), valueList);
-					i++;
+					Resource storeModel = _model.createResource(StaticProperties.NAMESPACE_STORE + "=" + i++);
+					storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME), name);
+					storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_ADRESS), adress);
 
-					System.out.println(valueList);
+					_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district).addProperty(
+					        _model.createProperty(StaticProperties.NAMESPACE_STORE), storeModel);
+
 				}
 			}
 			catch (Exception e)
@@ -126,5 +141,4 @@ public class GooglePlacesResource extends SingleWebResource
 
 		return districtSearchResource.getData().get("district").get(0).toString();
 	}
-
 }

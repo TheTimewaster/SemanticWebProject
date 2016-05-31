@@ -1,22 +1,18 @@
-package web.resources.impl;
+package proj.web.resources.imp;
 
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import data.ResultMap;
-import web.parsing.ResourceParser;
-import web.resources.SingleWebResource;
-import web.workflow.WorkflowInterruptedException;
+import proj.data.ResultMap;
+import proj.web.parsing.ResourceParser;
+import proj.web.resources.SingleWebResource;
+import proj.web.resources.SingleWebResource.WebResourceType;
+import proj.web.workflow.WorkflowInterruptedException;
 
 
 public class WikipediaTableResource extends SingleWebResource

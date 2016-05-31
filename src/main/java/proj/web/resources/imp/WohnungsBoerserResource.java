@@ -1,45 +1,41 @@
-package web.resources.impl;
+package proj.web.resources.imp;
 
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import data.ResultMap;
-import web.parsing.ResourceParser;
-import web.resources.SingleWebResource;
-import web.workflow.WorkflowInterruptedException;
+import proj.data.ResultMap;
+import proj.data.StaticProperties;
+import proj.web.parsing.ResourceParser;
+import proj.web.resources.SingleWebResource;
+import proj.web.resources.SingleWebResource.WebResourceType;
+import proj.web.workflow.WorkflowInterruptedException;
 
 
 public class WohnungsBoerserResource extends SingleWebResource
 {
-	private static final String	REQUEST_URL		= "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
+	private static final String	REQUEST_URL	   = "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
 
 	private static final String	LOCAL_RESOURCE	= "/Users/Tu/Documents/Hochschule/Master/Semantic Web/doc.htm";
 
-	Model						_model;
+	Model	                    _model;
 
 	public WohnungsBoerserResource(Model model)
 	{
 		_model = model;
 		_model.setNsPrefix("rdf", RDF.getURI());
-		_model.setNsPrefix("tht", "http://www.imn.htwk-leipzig.de/thoangth#");
+		_model.setNsPrefix("tht", StaticProperties.NAMESPACE_URI);
 	}
 
 	@Override
@@ -91,8 +87,6 @@ public class WohnungsBoerserResource extends SingleWebResource
 
 	private void executeGeneralWorkflow(ByteArrayOutputStream out)
 	{
-		Resource resource = _model.createResource(REQUEST_URL);
-
 		try
 		{
 			String contentString = new String(out.toByteArray(), "UTF-8");
@@ -117,32 +111,15 @@ public class WohnungsBoerserResource extends SingleWebResource
 						List<Object> values = new ArrayList<Object>();
 						values.add(value);
 
-						Resource districtResource = _model.createResource();
-						districtResource.addProperty(
-						        _model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#name"), district);
-						districtResource.addProperty(
-						        _model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#rental"), value);
-
-						resource.addProperty(_model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#district"),
-						        districtResource.addProperty(_model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#name"), district));
+						Resource districtResource = _model.createResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district);
+						districtResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME), district);
+						districtResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_RENT), value);
 					}
 				}
 			}
 
 		}
 		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-
-		// write model
-		FileOutputStream outFile;
-		try
-		{
-			outFile = new FileOutputStream(new File("C:\\Users\\Tu\\Desktop\\results.xml"));
-			_model.write(outFile);
-		}
-		catch (FileNotFoundException e)
 		{
 			e.printStackTrace();
 		}

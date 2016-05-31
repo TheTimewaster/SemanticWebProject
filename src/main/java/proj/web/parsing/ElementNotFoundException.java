@@ -1,4 +1,4 @@
-package web.parsing;
+package proj.web.parsing;
 
 /**
  * This Exception is thrown when no elements are found on parsing process.

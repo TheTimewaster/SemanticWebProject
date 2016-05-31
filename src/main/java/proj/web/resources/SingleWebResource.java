@@ -1,4 +1,4 @@
-package web.resources;
+package proj.web.resources;
 
 
 import java.io.IOException;
@@ -16,8 +16,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
-import data.ResultMap;
-import web.workflow.WorkflowInterruptedException;
+import proj.data.ResultMap;
+import proj.web.workflow.WorkflowInterruptedException;
 
 
 public abstract class SingleWebResource

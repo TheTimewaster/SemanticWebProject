@@ -1,4 +1,4 @@
-package web.parsing;
+package proj.web.parsing;
 
 
 import com.google.gson.JsonObject;

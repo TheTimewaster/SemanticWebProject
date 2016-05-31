@@ -1,4 +1,4 @@
-package data;
+package proj.data;
 
 
 import org.apache.jena.rdf.model.Model;
