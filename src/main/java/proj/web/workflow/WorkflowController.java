@@ -12,6 +12,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
 import proj.web.resources.imp.GooglePlacesResource;
+import proj.web.resources.imp.OsmOverpassResource;
 import proj.web.resources.imp.WohnungsBoerserResource;
 import proj.web.workflow.WorkflowThread;
 
@@ -26,7 +27,7 @@ public class WorkflowController
 {
 	List<WorkflowThread>	_threads;
 
-	Model	             _model;
+	Model					_model;
 
 	/**
 	 * Single uri constructor
@@ -41,9 +42,11 @@ public class WorkflowController
 
 		WorkflowThread workflowThread1 = new WorkflowThread(new WohnungsBoerserResource(_model));
 		WorkflowThread workflowThread2 = new WorkflowThread(new GooglePlacesResource(_model));
+		WorkflowThread workflowThread3 = new WorkflowThread(new OsmOverpassResource(_model));
 
-		_threads.add(workflowThread1);
-		_threads.add(workflowThread2);
+//		_threads.add(workflowThread1);
+//		_threads.add(workflowThread2);
+		_threads.add(workflowThread3);
 	}
 
 	/**

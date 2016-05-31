@@ -1,31 +1,40 @@
 package proj.data;
 
 
-import java.io.UnsupportedEncodingException;
-
-import org.apache.commons.codec.digest.Md5Crypt;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 
 
 public class IdGenerator
 {
 
-	public static String generateMd5Id(String name, String adress)
+	public static String generateMd5Id(String lat, String lon)
 	{
-		String formattedName = name.toLowerCase().replaceAll("\\s", "");
-
-		String[] adressComponents = adress.replaceAll("\\(.*\\)", "").split(",");
-		StringBuilder builder = new StringBuilder(formattedName);
-
-		for ( String s : adressComponents )
+		if ( lat.length() < 7 )
 		{
-			builder.append(s);
+			lat = lat.concat("0");
 		}
+
+		if ( lon.length() < 7 )
+		{
+			lon = lon.concat("0");
+		}
+
+		String latString = lat.substring(0, 7);
+		String lngString = lon.substring(0, 7);
 
 		try
 		{
-			return Md5Crypt.md5Crypt(builder.toString().getBytes("UTF-8"));
+
+			StringBuilder builder = new StringBuilder();
+			builder.append(lngString).append(";").append(latString);
+
+			MessageDigest mdg = MessageDigest.getInstance("MD5");
+			mdg.update(builder.toString().getBytes(), 0, builder.toString().length());
+
+			return new BigInteger(1, mdg.digest()).toString(16);
 		}
-		catch (UnsupportedEncodingException e)
+		catch (Exception e)
 		{
 			return null;
 		}

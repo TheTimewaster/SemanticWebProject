@@ -23,6 +23,7 @@ public class GoogleGeocodingResource extends SingleWebResource
 
 	public GoogleGeocodingResource(double lat, double lng)
 	{
+		super(null);
 		_lat = lat;
 		_lng = lng;
 	}
@@ -47,10 +48,15 @@ public class GoogleGeocodingResource extends SingleWebResource
 			JsonObject districtObject = componentsArray.get(2).getAsJsonObject();
 			String districtName = districtObject.get("long_name").getAsString();
 
+			String address = resultObject.getAsJsonArray("results").get(0).getAsJsonObject()
+			        .getAsJsonPrimitive("formatted_address").getAsString();
+
 			_data = new ResultMap();
 			List<Object> valueList = new ArrayList<>();
 			valueList.add(districtName);
-			_data.put("district", valueList);
+			valueList.add(address);
+
+			_data.put(ResultMap.FULL_ADDRESS_KEY, valueList);
 		}
 		catch (Exception e)
 		{

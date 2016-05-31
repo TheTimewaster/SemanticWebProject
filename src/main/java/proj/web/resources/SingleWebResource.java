@@ -15,6 +15,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.jena.rdf.model.Model;
 
 import proj.data.ResultMap;
 import proj.web.workflow.WorkflowInterruptedException;
@@ -24,6 +25,21 @@ public abstract class SingleWebResource
 {
 	protected String	_url;
 	protected ResultMap	_data;
+
+	protected Model		_model;
+
+	public SingleWebResource(Model model)
+	{
+		if ( model != null )
+		{
+			_model = model;
+		}
+	}
+
+	public Model getModel()
+	{
+		return _model;
+	}
 
 	protected void executeRequest(String url, OutputStream out) throws ClientProtocolException, IOException
 	{
@@ -49,7 +65,7 @@ public abstract class SingleWebResource
 			HttpEntity entity = new ByteArrayEntity(requestBody.getBytes(Charset.forName("UTF-8")));
 			postRequest.setEntity(entity);
 		}
-		
+
 		HttpResponse response = client.execute(postRequest);
 
 		InputStream is = response.getEntity().getContent();

@@ -25,16 +25,16 @@ import proj.web.workflow.WorkflowInterruptedException;
 
 public class WohnungsBoerserResource extends SingleWebResource
 {
-	private static final String	REQUEST_URL	   = "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
+	private static final String	REQUEST_URL		= "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
 
 	private static final String	LOCAL_RESOURCE	= "/Users/Tu/Documents/Hochschule/Master/Semantic Web/doc.htm";
 
-	Model	                    _model;
-
 	public WohnungsBoerserResource(Model model)
 	{
-		_model = model;
+		super(model);
+
 		_model.setNsPrefix("rdf", RDF.getURI());
+		_model.setNsPrefix("geo", StaticProperties.GEO_NAMESPACE_URI);
 		_model.setNsPrefix("tht", StaticProperties.NAMESPACE_URI);
 	}
 
@@ -111,7 +111,8 @@ public class WohnungsBoerserResource extends SingleWebResource
 						List<Object> values = new ArrayList<Object>();
 						values.add(value);
 
-						Resource districtResource = _model.createResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district);
+						Resource districtResource = _model
+						        .createResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district);
 						districtResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME), district);
 						districtResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_RENT), value);
 					}

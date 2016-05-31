@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.jena.rdf.model.Model;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -20,6 +21,11 @@ public class WikipediaTableResource extends SingleWebResource
 	private static final String	URL	= "https://de.wikipedia.org/wiki/Liste_der_Gro%C3%9Fst%C3%A4dte_in_Deutschland";
 
 	private Element				_document;
+
+	public WikipediaTableResource(Model model)
+	{
+		super(model);
+	}
 
 	@Override
 	public void startWorkflow() throws WorkflowInterruptedException

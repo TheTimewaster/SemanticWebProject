@@ -17,11 +17,12 @@ import java.util.Set;
  */
 public class ResultMap extends HashMap<String, List<Object>>
 {
+	public static final String	FULL_ADDRESS_KEY	= "full_address";
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long	serialVersionUID	= 1L;
 
 	public void writeToFile(String location, boolean append) throws IOException
 	{
