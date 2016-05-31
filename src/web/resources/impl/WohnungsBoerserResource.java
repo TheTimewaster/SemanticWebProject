@@ -4,31 +4,27 @@ package web.resources.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.rdf.model.impl.PropertyImpl;
-import org.apache.jena.vocabulary.OWL;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.VCARD;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import data.ResultMap;
 import web.parsing.ResourceParser;
 import web.resources.SingleWebResource;
-import web.resources.SingleWebResource.WebResourceType;
+import web.workflow.WorkflowInterruptedException;
 
 
 public class WohnungsBoerserResource extends SingleWebResource
@@ -42,10 +38,12 @@ public class WohnungsBoerserResource extends SingleWebResource
 	public WohnungsBoerserResource(Model model)
 	{
 		_model = model;
+		_model.setNsPrefix("rdf", RDF.getURI());
+		_model.setNsPrefix("tht", "http://www.imn.htwk-leipzig.de/thoangth#");
 	}
 
 	@Override
-	public void startWorkflow() throws Exception
+	public void startWorkflow() throws WorkflowInterruptedException
 	{
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -56,14 +54,21 @@ public class WohnungsBoerserResource extends SingleWebResource
 		}
 		catch (Exception e)
 		{
-			out = new ByteArrayOutputStream();
-			executeFallback();
-			executeGeneralWorkflow(out);
+			// out = new ByteArrayOutputStream();
+			// executeFallback();
+			// executeGeneralWorkflow(out);
+			e.printStackTrace();
 		}
 		finally
 		{
-			out.flush();
-			out.close();
+			try
+			{
+				out.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -86,6 +91,8 @@ public class WohnungsBoerserResource extends SingleWebResource
 
 	private void executeGeneralWorkflow(ByteArrayOutputStream out)
 	{
+		Resource resource = _model.createResource(REQUEST_URL);
+
 		try
 		{
 			String contentString = new String(out.toByteArray(), "UTF-8");
@@ -110,15 +117,32 @@ public class WohnungsBoerserResource extends SingleWebResource
 						List<Object> values = new ArrayList<Object>();
 						values.add(value);
 
-						Resource districtResource = _model.createResource(district);
-						districtResource.addProperty(ResourceFactory.createProperty("district"), district);
-						
+						Resource districtResource = _model.createResource();
+						districtResource.addProperty(
+						        _model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#name"), district);
+						districtResource.addProperty(
+						        _model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#rental"), value);
+
+						resource.addProperty(_model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#district"),
+						        districtResource.addProperty(_model.createProperty("http://www.imn.htwk-leipzig.de/thoangth#name"), district));
 					}
 				}
 			}
 
 		}
 		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+
+		// write model
+		FileOutputStream outFile;
+		try
+		{
+			outFile = new FileOutputStream(new File("C:\\Users\\Tu\\Desktop\\results.xml"));
+			_model.write(outFile);
+		}
+		catch (FileNotFoundException e)
 		{
 			e.printStackTrace();
 		}

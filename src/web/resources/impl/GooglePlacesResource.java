@@ -2,6 +2,7 @@ package web.resources.impl;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import com.google.gson.JsonObject;
 import data.ResultMap;
 import web.parsing.ResourceParser;
 import web.resources.SingleWebResource;
+import web.workflow.WorkflowInterruptedException;
 
 
 /**
@@ -22,51 +24,90 @@ import web.resources.SingleWebResource;
  */
 public class GooglePlacesResource extends SingleWebResource
 {
-	private static final String	URL	= "https://maps.googleapis.com/maps/api/place/textsearch/json?query=bioladen+in+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
+	private static final String		URL			= "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
 
-	private JsonObject			_gPlacesObj;
+	private static final String[]	KEYWORDS	=
+	{ "supermarkt", "bioladen", "discounter" };
+
+	// private JsonObject _gPlacesObj;
 
 	@Override
-	public void startWorkflow() throws Exception
+	public void startWorkflow() throws WorkflowInterruptedException
 	{
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		executeRequest(URL, out);
-
-		String response = new String(out.toByteArray(), "UTF-8");
-
-		_gPlacesObj = (JsonObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
-
 		_data = new ResultMap();
-		JsonArray array = _gPlacesObj.getAsJsonArray("results");
 
-		int i = 0;
-
-		for ( Object placeEntry : array )
+		for ( String keyword : KEYWORDS )
 		{
-			JsonObject placeObject = (JsonObject) placeEntry;
-			String name = placeObject.get("name").getAsString();
-			String adress = placeObject.get("formatted_address").getAsString();
-
-			String lat = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lat").getAsString();
-			String lng = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lng").getAsString();
-
-			List<Object> valueList = new ArrayList<Object>();
-			valueList.add(name);
-			valueList.add(adress);
-			valueList.add(lat);
-			valueList.add(lng);
-
-			String district = searchForDistrict(Double.valueOf(lat), Double.valueOf(lng));
-
-			if ( district != null )
+			ResultMap tmpData;
+			ByteArrayOutputStream out = null;
+			try
 			{
-				valueList.add(district);
+				tmpData = new ResultMap();
+				out = new ByteArrayOutputStream();
+				executeRequest(String.format(URL, keyword), out);
+
+				String response = new String(out.toByteArray(), "UTF-8");
+
+				JsonObject gPlacesObj = (JsonObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
+
+				JsonArray array = gPlacesObj.getAsJsonArray("results");
+
+				int i = 0;
+
+				for ( Object placeEntry : array )
+				{
+					JsonObject placeObject = (JsonObject) placeEntry;
+					String name = placeObject.get("name").getAsString();
+					String adress = placeObject.get("formatted_address").getAsString();
+
+					String lat = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lat")
+					        .getAsString();
+					String lng = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lng")
+					        .getAsString();
+
+					List<Object> valueList = new ArrayList<Object>();
+					valueList.add(name);
+					valueList.add(adress);
+					valueList.add(lat);
+					valueList.add(lng);
+
+					String district = searchForDistrict(Double.valueOf(lat), Double.valueOf(lng));
+
+					if ( district != null )
+					{
+						valueList.add(district);
+					}
+
+					tmpData.put(Integer.toString(i), valueList);
+					i++;
+
+					System.out.println(valueList);
+				}
+			}
+			catch (Exception e)
+			{
+				continue;
+			}
+			finally
+			{
+				if ( out != null )
+				{
+					try
+					{
+						out.close();
+					}
+					catch (IOException e)
+					{
+						throw new WorkflowInterruptedException(e);
+					}
+				}
 			}
 
-			_data.put(Integer.toString(i), valueList);
-			i++;
+			if ( tmpData != null )
+			{
+				_data.addAll(tmpData);
+			}
 
-			System.out.println(valueList);
 		}
 	}
 
@@ -78,9 +119,8 @@ public class GooglePlacesResource extends SingleWebResource
 		{
 			districtSearchResource.startWorkflow();
 		}
-		catch (Exception e)
+		catch (WorkflowInterruptedException e)
 		{
-			e.printStackTrace();
 			return null;
 		}
 

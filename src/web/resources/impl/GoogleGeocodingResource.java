@@ -2,6 +2,7 @@ package web.resources.impl;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import com.google.gson.JsonObject;
 import data.ResultMap;
 import web.parsing.ResourceParser;
 import web.resources.SingleWebResource;
+import web.workflow.WorkflowInterruptedException;
 
 
 public class GoogleGeocodingResource extends SingleWebResource
@@ -26,24 +28,49 @@ public class GoogleGeocodingResource extends SingleWebResource
 	}
 
 	@Override
-	public void startWorkflow() throws Exception
+	public void startWorkflow() throws WorkflowInterruptedException
 	{
-		String requestUrl = String.format(URL_TEMPLATE, String.valueOf(_lat), String.valueOf(_lng));
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ByteArrayOutputStream out = null;
 
-		executeRequest(requestUrl, out);
+		try
+		{
+			String requestUrl = String.format(URL_TEMPLATE, String.valueOf(_lat), String.valueOf(_lng));
+			out = new ByteArrayOutputStream();
 
-		String rawJson = new String(out.toByteArray(), "UTF-8");
-		JsonObject resultObject = (JsonObject) ResourceParser.parseResource(rawJson, WebResourceType.JSON_OBJ);
+			executeRequest(requestUrl, out);
 
-		JsonArray componentsArray = resultObject.getAsJsonArray("results").get(0).getAsJsonObject().getAsJsonArray("address_components");
-		JsonObject districtObject = componentsArray.get(2).getAsJsonObject();
-		String districtName = districtObject.get("long_name").getAsString();
+			String rawJson = new String(out.toByteArray(), "UTF-8");
+			JsonObject resultObject = (JsonObject) ResourceParser.parseResource(rawJson, WebResourceType.JSON_OBJ);
 
-		_data = new ResultMap();
-		List<Object> valueList = new ArrayList<>();
-		valueList.add(districtName);
-		_data.put("district", valueList);
+			JsonArray componentsArray = resultObject.getAsJsonArray("results").get(0).getAsJsonObject()
+			        .getAsJsonArray("address_components");
+			JsonObject districtObject = componentsArray.get(2).getAsJsonObject();
+			String districtName = districtObject.get("long_name").getAsString();
+
+			_data = new ResultMap();
+			List<Object> valueList = new ArrayList<>();
+			valueList.add(districtName);
+			_data.put("district", valueList);
+		}
+		catch (Exception e)
+		{
+			throw new WorkflowInterruptedException(e);
+		}
+		finally
+		{
+			if ( out != null )
+			{
+				try
+				{
+					out.close();
+				}
+				catch (IOException e)
+				{
+					throw new WorkflowInterruptedException(e);
+				}
+			}
+		}
+
 	}
 
 }

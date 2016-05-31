@@ -34,12 +34,12 @@ public class ResultMap extends HashMap<String, List<Object>>
 			Set<String> keySet = keySet();
 			StringBuilder builder = new StringBuilder();
 
-			for (String key : keySet)
+			for ( String key : keySet )
 			{
 				String line = key + ";";
 				List<Object> values = super.get(key);
 
-				for (Object s : values)
+				for ( Object s : values )
 				{
 					line += s;
 				}
@@ -51,12 +51,18 @@ public class ResultMap extends HashMap<String, List<Object>>
 			file.createNewFile();
 			writer = new FileWriter(file, append);
 			writer.write(builder.toString());
-		} finally
+		}
+		finally
 		{
-			if (writer != null)
+			if ( writer != null )
 			{
 				writer.close();
 			}
 		}
+	}
+
+	public void addAll(ResultMap map)
+	{
+		this.putAll(map);
 	}
 }

@@ -38,10 +38,10 @@ public class WorkflowController
 		Model model = ModelFactory.createDefaultModel();
 
 		WorkflowThread workflowThread1 = new WorkflowThread(new WohnungsBoerserResource(model));
-		WorkflowThread workflowThread2 = new WorkflowThread(new GooglePlacesResource());
+//		WorkflowThread workflowThread2 = new WorkflowThread(new GooglePlacesResource());
 
 		_threads.add(workflowThread1);
-		_threads.add(workflowThread2);
+//		_threads.add(workflowThread2);
 	}
 
 	/**

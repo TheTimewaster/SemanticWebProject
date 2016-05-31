@@ -17,15 +17,15 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import data.ResultMap;
+import web.workflow.WorkflowInterruptedException;
 
 
 public abstract class SingleWebResource
 {
-	protected String _url;
-	protected ResultMap _data;
+	protected String	_url;
+	protected ResultMap	_data;
 
-	protected void executeRequest(String url, OutputStream out) throws ClientProtocolException,
-			IOException
+	protected void executeRequest(String url, OutputStream out) throws ClientProtocolException, IOException
 	{
 		HttpClient client = HttpClientBuilder.create().build();
 		HttpGet getRequest;
@@ -39,15 +39,17 @@ public abstract class SingleWebResource
 	}
 
 	protected void executePostRequest(String url, OutputStream out, String requestBody)
-			throws ClientProtocolException, IOException
+	        throws ClientProtocolException, IOException
 	{
 		HttpClient client = HttpClientBuilder.create().build();
 
 		HttpPost postRequest = new HttpPost(url);
-		HttpEntity entity = new ByteArrayEntity(requestBody.getBytes(Charset.forName("UTF-8")));
-
-		postRequest.setEntity(entity);
-
+		if ( requestBody != null )
+		{
+			HttpEntity entity = new ByteArrayEntity(requestBody.getBytes(Charset.forName("UTF-8")));
+			postRequest.setEntity(entity);
+		}
+		
 		HttpResponse response = client.execute(postRequest);
 
 		InputStream is = response.getEntity().getContent();
@@ -59,7 +61,7 @@ public abstract class SingleWebResource
 		return _data;
 	}
 
-	public abstract void startWorkflow() throws Exception;
+	public abstract void startWorkflow() throws WorkflowInterruptedException;
 
 	public enum WebResourceType
 	{

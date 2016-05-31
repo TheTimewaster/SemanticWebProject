@@ -7,7 +7,7 @@ import web.resources.SingleWebResource;
 public class WorkflowThread implements Runnable
 {
 	SingleWebResource _source;
-	
+
 	public WorkflowThread(SingleWebResource source)
 	{
 		_source = source;
@@ -20,7 +20,7 @@ public class WorkflowThread implements Runnable
 		{
 			_source.startWorkflow();
 		}
-		catch (Exception e)
+		catch (WorkflowInterruptedException e)
 		{
 			e.printStackTrace();
 		}
