@@ -70,7 +70,7 @@ public class WorkflowController
 			thread.run();
 		}
 
-		String targetFile = System.getProperty("user.home") + "/Desktop/results.ttl";
+		String targetFile = System.getProperty("user.home") + "/Desktop/results.xml";
 		try
 		{
 			FileOutputStream out = new FileOutputStream(new File(targetFile));
