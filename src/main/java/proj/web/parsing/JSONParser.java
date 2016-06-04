@@ -11,6 +11,11 @@ public class JSONParser
 	{
 		JsonParser parser = new JsonParser();
 
+		if ( parser.parse(rawJson).isJsonNull() )
+		{
+			System.out.println("here");
+		}
+
 		return (JsonObject) parser.parse(rawJson);
 	}
 

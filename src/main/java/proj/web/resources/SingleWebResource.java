@@ -52,6 +52,16 @@ public abstract class SingleWebResource
 
 		InputStream is = response.getEntity().getContent();
 		IOUtils.copy(is, out);
+
+		try
+		{
+			// wait for copy?!
+			Thread.sleep(2000);
+		}
+		catch (InterruptedException e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	protected void executePostRequest(String url, OutputStream out, String requestBody)

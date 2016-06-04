@@ -46,7 +46,7 @@ public class WorkflowController
 
 		_threads.add(workflowThread1);
 		_threads.add(workflowThread2);
-		_threads.add(workflowThread3);
+//		_threads.add(workflowThread3);
 	}
 
 	/**

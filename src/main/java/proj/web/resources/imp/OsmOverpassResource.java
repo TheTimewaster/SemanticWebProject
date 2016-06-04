@@ -21,7 +21,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import proj.data.CoordList;
+import proj.data.location.CoordList;
+import proj.data.location.Coordinates;
 import proj.data.IdGenerator;
 import proj.data.ResultMap;
 import proj.data.StaticProperties;
@@ -31,13 +32,13 @@ import proj.web.workflow.WorkflowInterruptedException;
 
 public class OsmOverpassResource extends SingleWebResource
 {
-	private final static String	  URL	     = "http://overpass-api.de/api/interpreter";
+	private final static String		URL			= "http://overpass-api.de/api/interpreter";
 
-	private final static String	  POST_BODY	 = "data=area[name=Leipzig];node(area)%s;out;";
+	private final static String		POST_BODY	= "data=area[name=Leipzig];node(area)%s;out;";
 
 	private final static String[]	KEYWORDS	=
-	                                         { "[shop=supermarket][organic=only]", "[shop=supermarket]",
-	        "[shop=supermarket][organic=yes]", "[shop=convenience][organic=yes]", "[shop=convenience][organic=only]" };
+	{ "[shop=supermarket][organic=only]", "[shop=supermarket]", "[shop=supermarket][organic=yes]",
+	        "[shop=convenience][organic=yes]", "[shop=convenience][organic=only]" };
 
 	public OsmOverpassResource(Model model)
 	{
@@ -60,11 +61,12 @@ public class OsmOverpassResource extends SingleWebResource
 				{
 					String latString = result.get("lat");
 					String lngString = result.get("lng");
-					Double[] coordPair = CoordList.getInstance().calculateDistance(Double.valueOf(latString),
+					Coordinates coordPair = CoordList.getInstance().calculateDistance(Double.valueOf(latString),
 					        Double.valueOf(lngString));
 					if ( coordPair != null )
 					{
-						String id = IdGenerator.generateMd5Id(coordPair[0].toString(), coordPair[1].toString());
+						String id = IdGenerator.generateMd5Id(coordPair.getLat().toString(),
+						        coordPair.getLng().toString());
 						Resource storeResource = _model.createResource(StaticProperties.NAMESPACE_STORE + "=" + id);
 						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
 					}
@@ -84,8 +86,8 @@ public class OsmOverpassResource extends SingleWebResource
 						        result.get("lng"));
 						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
 
-						_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district).addProperty(
-						        _model.createProperty(StaticProperties.NAMESPACE_STORE), storeResource);
+						_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district)
+						        .addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORE), storeResource);
 					}
 				}
 
@@ -102,8 +104,8 @@ public class OsmOverpassResource extends SingleWebResource
 
 	}
 
-	private List<Map<String, String>> readXmlFile(byte[] bytesOfString) throws ParserConfigurationException,
-	        SAXException, IOException, WorkflowInterruptedException
+	private List<Map<String, String>> readXmlFile(byte[] bytesOfString)
+	        throws ParserConfigurationException, SAXException, IOException, WorkflowInterruptedException
 	{
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dbuilder = dbFactory.newDocumentBuilder();

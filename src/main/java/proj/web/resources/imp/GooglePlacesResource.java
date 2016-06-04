@@ -3,17 +3,20 @@ package proj.web.resources.imp;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import proj.data.CoordList;
 import proj.data.IdGenerator;
 import proj.data.ResultMap;
 import proj.data.StaticProperties;
+import proj.data.location.CoordList;
 import proj.web.parsing.ResourceParser;
 import proj.web.resources.SingleWebResource;
 import proj.web.workflow.WorkflowInterruptedException;
@@ -32,63 +35,65 @@ import com.google.gson.JsonPrimitive;
  */
 public class GooglePlacesResource extends SingleWebResource
 {
-	private static final String	  URL	     = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
+	private static final String		URL			= "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
+
+	private List<String>			googleMapsIds;
 
 	private static final String[]	KEYWORDS	=
-	                                         { "supermarkt", "bioladen", "discounter" };
+	{ "supermarkt", "bioladen", "discounter" };
+
+	private static final Logger		LOGGER		= LoggerFactory.getLogger(GooglePlacesResource.class);
 
 	public GooglePlacesResource(Model model)
 	{
 		super(model);
+		googleMapsIds = new ArrayList<>();
 	}
 
 	@Override
 	public void startWorkflow() throws WorkflowInterruptedException
 	{
+		JsonObject gPlacesObj = null;
+		String response = null;
+		String requestUrl = null;
+
 		for ( String keyword : KEYWORDS )
 		{
+			String nextPageToken = "";
 			ByteArrayOutputStream out = null;
 			try
 			{
-				out = new ByteArrayOutputStream();
-				executeRequest(String.format(URL, keyword), out);
-
-				String response = new String(out.toByteArray(), "UTF-8");
-
-				JsonObject gPlacesObj = (JsonObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
-
-				JsonArray array = gPlacesObj.getAsJsonArray("results");
-
-				for ( Object placeEntry : array )
+				while (true)
 				{
-					Map<String, String> placeEntryMap = buildResult(placeEntry);
+					out = new ByteArrayOutputStream();
 
-					if ( placeEntryMap != null )
+					requestUrl = (nextPageToken.isEmpty()) ? String.format(URL, keyword)
+					        : String.format(URL + "&pagetoken=" + nextPageToken, keyword);
+
+					executeRequest(requestUrl, out);
+
+					LOGGER.info("Request executed: " + keyword + "\t" + requestUrl);
+					response = new String(out.toByteArray(), "UTF-8");
+
+					gPlacesObj = (JsonObject) ResourceParser.parseResource(response, WebResourceType.JSON_OBJ);
+					JsonArray resultsArray = gPlacesObj.getAsJsonArray("results");
+					writeResultsToModel(resultsArray, keyword);
+
+					if ( gPlacesObj.has("next_page_token") )
 					{
-						String id = IdGenerator.generateMd5Id(placeEntryMap.get("lat"), placeEntryMap.get("lng"));
-
-						Resource storeModel = _model.createResource(StaticProperties.NAMESPACE_STORE + "=" + id);
-						storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME),
-						        placeEntryMap.get("name"));
-						storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_ADRESS),
-						        placeEntryMap.get("adress"));
-						storeModel.addProperty(_model.createProperty(StaticProperties.GEO_NAMESPACE_URI, "lat"),
-						        placeEntryMap.get("lat"));
-						storeModel.addProperty(_model.createProperty(StaticProperties.GEO_NAMESPACE_URI, "long"),
-						        placeEntryMap.get("lng"));
-						storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
-
-						_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + placeEntryMap.get("district"))
-						        .addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORE), storeModel);
-
-						CoordList.getInstance().addCoord(Double.valueOf(placeEntryMap.get("lat")),
-						        Double.valueOf(placeEntryMap.get("lng")));
+						nextPageToken = gPlacesObj.getAsJsonPrimitive("next_page_token").getAsString();
+						LOGGER.info("Next page found: " + keyword + "\t" + nextPageToken);
+					}
+					else
+					{
+						LOGGER.info("Last page found: " + keyword + "\t");
+						break;
 					}
 				}
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				LOGGER.error("An error occured for: " + keyword + "\t" + requestUrl + "\t" + response, e);
 				continue;
 			}
 			finally
@@ -103,6 +108,46 @@ public class GooglePlacesResource extends SingleWebResource
 					{
 						throw new WorkflowInterruptedException(e);
 					}
+				}
+			}
+		}
+	}
+
+	private void writeResultsToModel(JsonArray resultsArray, String keyword)
+	{
+		for ( Object placeEntry : resultsArray )
+		{
+
+			Map<String, String> placeEntryMap = buildResult(placeEntry);
+
+			if ( placeEntryMap != null )
+			{
+				String id = IdGenerator.generateMd5Id(placeEntryMap.get("lat"), placeEntryMap.get("lng"));
+				Resource storeModel = _model.createResource(StaticProperties.NAMESPACE_STORE + "=" + id);
+
+				// new entry
+				if ( placeEntryMap.get("adress") != null && placeEntryMap.get("district") != null )
+				{
+					storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME),
+					        placeEntryMap.get("name"));
+					storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_ADRESS),
+					        placeEntryMap.get("adress"));
+					storeModel.addProperty(_model.createProperty(StaticProperties.GEO_NAMESPACE_URI, "lat"),
+					        placeEntryMap.get("lat"));
+					storeModel.addProperty(_model.createProperty(StaticProperties.GEO_NAMESPACE_URI, "long"),
+					        placeEntryMap.get("lng"));
+					storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
+
+					_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + placeEntryMap.get("district"))
+					        .addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORE), storeModel);
+
+					CoordList.getInstance().addNewStoreLocation(Double.valueOf(placeEntryMap.get("lat")),
+					        Double.valueOf(placeEntryMap.get("lng")));
+				}
+				else
+				{
+					// entry exists, just add keyword for further validation
+					storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
 				}
 			}
 		}
@@ -127,13 +172,14 @@ public class GooglePlacesResource extends SingleWebResource
 	private Map<String, String> buildResult(Object placeEntry)
 	{
 		JsonObject placeObject = (JsonObject) placeEntry;
-		java.util.Map<String, String> valueList = null;
+		Map<String, String> valueList = null;
 
 		if ( isTypeGroceriesSupermarket(placeObject.getAsJsonArray("types")) )
 		{
 			valueList = new HashMap<>();
 
 			String name = placeObject.get("name").getAsString();
+			String gMapsId = placeObject.get("id").getAsString();
 
 			String lat = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lat").getAsString();
 			String lng = placeObject.getAsJsonObject("geometry").getAsJsonObject("location").get("lng").getAsString();
@@ -142,18 +188,24 @@ public class GooglePlacesResource extends SingleWebResource
 			valueList.put("lat", lat);
 			valueList.put("lng", lng);
 
-			List<Object> fullAdress = searchFullAdress(Double.valueOf(lat), Double.valueOf(lng));
-
-			String district = fullAdress.get(0).toString();
-
-			if ( fullAdress.size() > 0 )
+			// avoid address search when was found in previous search
+			if ( !googleMapsIds.contains(gMapsId) )
 			{
-				valueList.put("adress", fullAdress.get(1).toString());
-			}
+				List<Object> fullAdress = searchFullAdress(Double.valueOf(lat), Double.valueOf(lng));
 
-			if ( district != null )
-			{
-				valueList.put("district", district);
+				String district = fullAdress.get(0).toString();
+
+				if ( fullAdress.size() > 0 )
+				{
+					valueList.put("adress", fullAdress.get(1).toString());
+				}
+
+				if ( district != null )
+				{
+					valueList.put("district", district);
+				}
+
+				googleMapsIds.add(gMapsId);
 			}
 		}
 
