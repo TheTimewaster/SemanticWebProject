@@ -17,7 +17,7 @@ import com.google.gson.JsonObject;
 
 public class GoogleGeocodingResource extends SingleWebResource
 {
-	private double				_lat, _lng;
+	private double	            _lat, _lng;
 
 	private final static String	URL_TEMPLATE	= "https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
 
@@ -50,6 +50,11 @@ public class GoogleGeocodingResource extends SingleWebResource
 
 			String address = resultObject.getAsJsonArray("results").get(0).getAsJsonObject()
 			        .getAsJsonPrimitive("formatted_address").getAsString();
+
+			if ( districtName.contains(",") )
+			{
+				System.out.println("here");
+			}
 
 			_data = new ResultMap();
 			List<Object> valueList = new ArrayList<>();

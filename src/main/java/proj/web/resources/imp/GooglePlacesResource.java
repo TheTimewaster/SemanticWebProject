@@ -10,16 +10,17 @@ import java.util.Map;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-
+import proj.data.CoordList;
 import proj.data.IdGenerator;
 import proj.data.ResultMap;
 import proj.data.StaticProperties;
 import proj.web.parsing.ResourceParser;
 import proj.web.resources.SingleWebResource;
 import proj.web.workflow.WorkflowInterruptedException;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 
 /**
@@ -31,10 +32,10 @@ import proj.web.workflow.WorkflowInterruptedException;
  */
 public class GooglePlacesResource extends SingleWebResource
 {
-	private static final String		URL			= "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
+	private static final String	  URL	     = "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
 
 	private static final String[]	KEYWORDS	=
-	{ "supermarkt", "bioladen", "discounter" };
+	                                         { "supermarkt", "bioladen", "discounter" };
 
 	public GooglePlacesResource(Model model)
 	{
@@ -44,8 +45,6 @@ public class GooglePlacesResource extends SingleWebResource
 	@Override
 	public void startWorkflow() throws WorkflowInterruptedException
 	{
-		int i = 0;
-
 		for ( String keyword : KEYWORDS )
 		{
 			ByteArrayOutputStream out = null;
@@ -77,9 +76,13 @@ public class GooglePlacesResource extends SingleWebResource
 						        placeEntryMap.get("lat"));
 						storeModel.addProperty(_model.createProperty(StaticProperties.GEO_NAMESPACE_URI, "long"),
 						        placeEntryMap.get("lng"));
+						storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
 
 						_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + placeEntryMap.get("district"))
 						        .addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORE), storeModel);
+
+						CoordList.getInstance().addCoord(Double.valueOf(placeEntryMap.get("lat")),
+						        Double.valueOf(placeEntryMap.get("lng")));
 					}
 				}
 			}

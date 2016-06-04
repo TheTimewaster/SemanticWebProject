@@ -12,7 +12,6 @@ import org.jsoup.select.Elements;
 import proj.data.ResultMap;
 import proj.web.parsing.ResourceParser;
 import proj.web.resources.SingleWebResource;
-import proj.web.resources.SingleWebResource.WebResourceType;
 import proj.web.workflow.WorkflowInterruptedException;
 
 
