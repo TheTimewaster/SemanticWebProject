@@ -1,0 +1,75 @@
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent ?storename
+WHERE {
+	?district thoangth:name ?name .
+  	?district thoangth:rent ?rent.
+  	?district thoangth:store ?store.
+  	?store thoangth:name ?storename.
+  	FILTER EXISTS {?district thoangth:store ?store}.
+ 	FILTER EXISTS {?district thoangth:rent ?rent}
+}
+
+
+// concated types
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent ?storename (group_concat(?type) as ?types)
+WHERE {
+	?district thoangth:name ?name .
+  	?district thoangth:rent ?rent.
+  	?district thoangth:store ?store.
+  	?store thoangth:storetype ?type.
+  	?store thoangth:name ?storename.
+  	FILTER EXISTS {?district thoangth:store ?store}.
+ 	FILTER EXISTS {?district thoangth:rent ?rent}
+}
+GROUP BY ?name ?rent ?storename
+
+// get all organic food stores - 24 Entries
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent ?storename (group_concat(?type) as ?types)
+WHERE {
+	?district thoangth:name ?name .
+  	?district thoangth:rent ?rent.
+  	?district thoangth:store ?store.
+  	?store thoangth:storetype ?type.
+  	?store thoangth:name ?storename.
+  	FILTER EXISTS {?district thoangth:store ?store}.
+ 	FILTER EXISTS {?district thoangth:rent ?rent}.
+  FILTER (regex(?type, ".*organic.*") || regex(?type, ".*bio.*"))
+}
+GROUP BY ?name ?rent ?storename
+
+// get all discounters - 84 Entries
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent ?storename (group_concat(?type) as ?types)
+WHERE {
+	?district thoangth:name ?name .
+  	?district thoangth:rent ?rent.
+  	?district thoangth:store ?store.
+  	?store thoangth:storetype ?type.
+  	?store thoangth:name ?storename.
+  	FILTER EXISTS {?district thoangth:store ?store}.
+ 	FILTER EXISTS {?district thoangth:rent ?rent}.
+  	FILTER (regex(?storename, ".*ALDI.*", "i") || regex(?storename, ".*NETTO.*", "i") || regex(?storename, ".*LIDL.*", "i") || regex(?storename, ".*Penny.*", "i") || regex(?storename, ".*Norma.*", "i"))
+}
+GROUP BY ?name ?rent ?storename
+
+// get all supermarkets - 46 Entries
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent ?storename (group_concat(?type) as ?types)
+WHERE {
+	?district thoangth:name ?name .
+  	?district thoangth:rent ?rent.
+  	?district thoangth:store ?store.
+  	?store thoangth:storetype ?type.
+  	?store thoangth:name ?storename.
+  	FILTER EXISTS {?district thoangth:store ?store}.
+ 	FILTER EXISTS {?district thoangth:rent ?rent}.
+  	FILTER (regex(?storename, ".*EDEKDA.*", "i") || regex(?storename, ".*KONSUM.*", "i") || regex(?storename, ".*REWE.*", "i") || regex(?storename, ".*Kaufland.*", "i"))
+}
+GROUP BY ?name ?rent ?storename

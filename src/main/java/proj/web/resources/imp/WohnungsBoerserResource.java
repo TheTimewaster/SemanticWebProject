@@ -24,7 +24,7 @@ import proj.web.workflow.WorkflowInterruptedException;
 
 public class WohnungsBoerserResource extends SingleWebResource
 {
-	private static final String	REQUEST_URL	   = "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
+	private static final String	REQUEST_URL		= "http://www.wohnungsboerse.net/mietspiegel-Leipzig/7390";
 
 	private static final String	LOCAL_RESOURCE	= "/Users/Tu/Documents/Hochschule/Master/Semantic Web/doc.htm";
 
@@ -109,9 +109,51 @@ public class WohnungsBoerserResource extends SingleWebResource
 						String value = tableColumns.get(i + 1).text();
 						List<Object> values = new ArrayList<Object>();
 						values.add(value);
+						Resource districtResource = null;
+						/*if ( "Zentrum".equals(district) )
+						{
+							districtResource = _model.createResource(StaticProperties.NAMESPACE_DISTRICT + "-Mitte");
 
-						Resource districtResource = _model.createResource(StaticProperties.NAMESPACE_DISTRICT + "="
-						        + district);
+						}
+						else */if ( district.startsWith("Anger-") )
+						{
+							districtResource = _model.createResource(StaticProperties.NAMESPACE_DISTRICT + "-Anger");
+						}
+						else if ( district.startsWith("Reudnitz-") )
+						{
+							districtResource = _model.createResource(StaticProperties.NAMESPACE_DISTRICT + "-Reudnitz");
+						}
+						else if ( district.startsWith("Sellerhausen-") )
+						{
+							districtResource = _model
+							        .createResource(StaticProperties.NAMESPACE_DISTRICT + "-Sellerhausen");
+						}
+						else if ( district.startsWith("Knauthain-") )
+						{
+							districtResource = _model
+							        .createResource(StaticProperties.NAMESPACE_DISTRICT + "-Knautkleeberg-Knauthain");
+						}
+						else if ( district.startsWith("Schönefeld-Abtnaundorf") )
+						{
+							districtResource = _model
+							        .createResource(StaticProperties.NAMESPACE_DISTRICT + "-Abtnaundorf");
+						}
+						else if ( district.startsWith("Neustadt-") )
+						{
+							districtResource = _model
+							        .createResource(StaticProperties.NAMESPACE_DISTRICT + "-Neustadt");
+						}
+						else if ( district.startsWith("Südvorstadt") )
+						{
+							districtResource = _model
+							        .createResource(StaticProperties.NAMESPACE_DISTRICT + "-Sudvorstadt");
+						}
+						else
+						{
+							districtResource = _model
+							        .createResource(StaticProperties.NAMESPACE_DISTRICT + "-" + district);
+						}
+
 						districtResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME), district);
 						districtResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_RENT), value);
 					}

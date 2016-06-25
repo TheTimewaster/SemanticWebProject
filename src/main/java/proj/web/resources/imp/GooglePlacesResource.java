@@ -5,8 +5,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -37,7 +39,7 @@ public class GooglePlacesResource extends SingleWebResource
 {
 	private static final String		URL			= "https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s+leipzig&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
 
-	private List<String>			googleMapsIds;
+	private Set<String>				_googleMapsIds;
 
 	private static final String[]	KEYWORDS	=
 	{ "supermarkt", "bioladen", "discounter" };
@@ -47,7 +49,7 @@ public class GooglePlacesResource extends SingleWebResource
 	public GooglePlacesResource(Model model)
 	{
 		super(model);
-		googleMapsIds = new ArrayList<>();
+		_googleMapsIds = new HashSet<>();
 	}
 
 	@Override
@@ -60,7 +62,7 @@ public class GooglePlacesResource extends SingleWebResource
 		for ( String keyword : KEYWORDS )
 		{
 			int counter = 0;
-			
+
 			String nextPageToken = "";
 			ByteArrayOutputStream out = null;
 			try
@@ -116,7 +118,7 @@ public class GooglePlacesResource extends SingleWebResource
 	}
 
 	private void writeResultsToModel(JsonArray resultsArray, String keyword)
-	{		
+	{
 		int counter = 0;
 		for ( Object placeEntry : resultsArray )
 		{
@@ -141,7 +143,7 @@ public class GooglePlacesResource extends SingleWebResource
 					        placeEntryMap.get("lng"));
 					storeModel.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
 
-					_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + placeEntryMap.get("district"))
+					_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "-" + placeEntryMap.get("district"))
 					        .addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORE), storeModel);
 
 					CoordList.getInstance().addNewStoreLocation(Double.valueOf(placeEntryMap.get("lat")),
@@ -155,7 +157,7 @@ public class GooglePlacesResource extends SingleWebResource
 				}
 			}
 		}
-		
+
 		LOGGER.info("Processing finished: " + counter + " new results found!");
 	}
 
@@ -195,7 +197,7 @@ public class GooglePlacesResource extends SingleWebResource
 			valueList.put("lng", lng);
 
 			// avoid address search when was found in previous search
-			if ( !googleMapsIds.contains(gMapsId) )
+			if ( !_googleMapsIds.contains(gMapsId) )
 			{
 				List<Object> fullAdress = searchFullAdress(Double.valueOf(lat), Double.valueOf(lng));
 
@@ -211,7 +213,7 @@ public class GooglePlacesResource extends SingleWebResource
 					valueList.put("district", district);
 				}
 
-				googleMapsIds.add(gMapsId);
+				_googleMapsIds.add(gMapsId);
 			}
 		}
 

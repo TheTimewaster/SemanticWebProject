@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -41,12 +43,15 @@ public class OsmOverpassResource extends SingleWebResource
 	private final static String[]	KEYWORDS	=
 	{ "[shop=supermarket][organic=only]", "[shop=supermarket]", "[shop=supermarket][organic=yes]",
 	        "[shop=convenience][organic=yes]", "[shop=convenience][organic=only]" };
-	
+
 	private static final Logger		LOGGER		= LoggerFactory.getLogger(OsmOverpassResource.class);
+
+	private Set<String>				_osmOverpassIds;
 
 	public OsmOverpassResource(Model model)
 	{
 		super(model);
+		_osmOverpassIds = new HashSet<>();
 	}
 
 	@Override
@@ -55,12 +60,12 @@ public class OsmOverpassResource extends SingleWebResource
 		for ( String keyword : KEYWORDS )
 		{
 			int counter = 0;
-			
+
 			try
 			{
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				executePostRequest(URL, out, String.format(POST_BODY, keyword));
-				
+
 				LOGGER.info("Request executed: " + keyword);
 
 				List<Map<String, String>> resultList = readXmlFile(out.toByteArray());
@@ -84,9 +89,21 @@ public class OsmOverpassResource extends SingleWebResource
 						String id = IdGenerator.generateMd5Id(latString, lngString);
 
 						Resource storeResource = _model.createResource(StaticProperties.NAMESPACE_STORE + "-" + id);
-						
-						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME),
-						        result.get("name"));
+
+						if ( result.get("name") != null )
+						{
+							storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME),
+							        result.get("name"));
+						}
+						else if(result.get("operator") != null)
+						{
+							storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME),
+							        result.get("operator"));
+						}
+						else
+						{
+							continue;
+						}
 						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_ADRESS),
 						        result.get("adress"));
 						storeResource.addProperty(_model.createProperty(StaticProperties.GEO_NAMESPACE_URI, "lat"),
@@ -95,14 +112,14 @@ public class OsmOverpassResource extends SingleWebResource
 						        result.get("lng"));
 						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
 
-						_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district)
+						_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "-" + district)
 						        .addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORE), storeResource);
 						counter++;
 					}
 				}
 				LOGGER.info("Processing finished: " + counter + " new results found!");
 				// remove when continue development
-				//break;
+				// break;
 			}
 			catch (Exception e)
 			{
@@ -116,7 +133,7 @@ public class OsmOverpassResource extends SingleWebResource
 
 	private List<Map<String, String>> readXmlFile(byte[] bytesOfString)
 	        throws ParserConfigurationException, SAXException, IOException, WorkflowInterruptedException
-	{	
+	{
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dbuilder = dbFactory.newDocumentBuilder();
 
@@ -128,7 +145,7 @@ public class OsmOverpassResource extends SingleWebResource
 		List<Map<String, String>> resultList = new ArrayList<>();
 
 		for ( int i = 0; i < nodes.getLength(); i++ )
-		{			
+		{
 			Map<String, String> storeInfoMap = new HashMap<>();
 
 			Node locationNode = nodes.item(i);
@@ -137,34 +154,54 @@ public class OsmOverpassResource extends SingleWebResource
 
 			String lat = locationNode.getAttributes().getNamedItem("lat").getNodeValue();
 			String lng = locationNode.getAttributes().getNamedItem("lon").getNodeValue();
-
-			storeInfoMap.put("lat", lat);
-			storeInfoMap.put("lng", lng);
-
-			GoogleGeocodingResource res = new GoogleGeocodingResource(Double.valueOf(lat), Double.valueOf(lng));
-			res.startWorkflow();
-			ResultMap resultMap = res.getData();
-
-			if ( resultMap.get(ResultMap.FULL_ADDRESS_KEY) != null )
+			String id = locationNode.getAttributes().getNamedItem("id").getNodeValue();
+			
+			if ( !_osmOverpassIds.contains(id) )
 			{
-				String fullAdress = resultMap.get(ResultMap.FULL_ADDRESS_KEY).get(1).toString();
-				storeInfoMap.put("adress", fullAdress);
-				String district = resultMap.get(ResultMap.FULL_ADDRESS_KEY).get(0).toString();
-				storeInfoMap.put("district", district);
-			}
+				storeInfoMap.put("lat", lat);
+				storeInfoMap.put("lng", lng);
 
-			for ( int j = 0; j < locationProperties.getLength(); j++ )
-			{
-				Node propertyNode = locationProperties.item(j);
-				if ( propertyNode.getAttributes() != null
-				        && "name".equals(propertyNode.getAttributes().getNamedItem("k").getNodeValue()) )
+				GoogleGeocodingResource res = new GoogleGeocodingResource(Double.valueOf(lat), Double.valueOf(lng));
+				res.startWorkflow();
+				ResultMap resultMap = res.getData();
+
+				if ( resultMap.get(ResultMap.FULL_ADDRESS_KEY) != null )
 				{
-					String storeName = propertyNode.getAttributes().getNamedItem("v").getNodeValue();
-					storeInfoMap.put("name", storeName);
+					String fullAdress = resultMap.get(ResultMap.FULL_ADDRESS_KEY).get(1).toString();
+					storeInfoMap.put("adress", fullAdress);
+					String district = resultMap.get(ResultMap.FULL_ADDRESS_KEY).get(0).toString();
+					storeInfoMap.put("district", district);
 				}
+
+				if ( "51.2729842".equals(storeInfoMap.get("lat")) )
+				{
+					System.out.println("stop");
+				}
+
+				for ( int j = 0; j < locationProperties.getLength(); j++ )
+				{
+					Node propertyNode = locationProperties.item(j);
+					if ( propertyNode.getAttributes() != null )
+					{
+						if ( "name".equals(propertyNode.getAttributes().getNamedItem("k").getNodeValue()) )
+						{
+							String storeName = propertyNode.getAttributes().getNamedItem("v").getNodeValue();
+							storeInfoMap.put("name", storeName);
+						}
+
+						// fallback to operator when name is not available
+						if ( "operator".equals(propertyNode.getAttributes().getNamedItem("k").getNodeType()) )
+						{
+							String storeName = propertyNode.getAttributes().getNamedItem("v").getNodeValue();
+							storeInfoMap.put("operator", storeName);
+						}
+					}
+				}
+
+				resultList.add(storeInfoMap);
+				_osmOverpassIds.add(id);
 			}
 
-			resultList.add(storeInfoMap);
 		}
 
 		return resultList;

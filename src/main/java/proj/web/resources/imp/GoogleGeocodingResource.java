@@ -12,12 +12,14 @@ import proj.web.resources.SingleWebResource;
 import proj.web.workflow.WorkflowInterruptedException;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 
 public class GoogleGeocodingResource extends SingleWebResource
 {
-	private double	            _lat, _lng;
+	private double				_lat, _lng;
 
 	private final static String	URL_TEMPLATE	= "https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&key=AIzaSyAV201q9SNmr2WXEzT9HrSVG_YdMEjQn-M";
 
@@ -43,25 +45,13 @@ public class GoogleGeocodingResource extends SingleWebResource
 			String rawJson = new String(out.toByteArray(), "UTF-8");
 			JsonObject resultObject = (JsonObject) ResourceParser.parseResource(rawJson, WebResourceType.JSON_OBJ);
 
-			JsonArray componentsArray = resultObject.getAsJsonArray("results").get(0).getAsJsonObject()
-			        .getAsJsonArray("address_components");
-			JsonObject districtObject = componentsArray.get(2).getAsJsonObject();
-			String districtName = districtObject.get("long_name").getAsString();
-
-			String address = resultObject.getAsJsonArray("results").get(0).getAsJsonObject()
-			        .getAsJsonPrimitive("formatted_address").getAsString();
-
-			if ( districtName.contains(",") )
+			if ( !tryExtractAdress(resultObject, "sublocality_level_2") )
 			{
-				System.out.println("here");
+				if ( !tryExtractAdress(resultObject, "sublocality_level_1") )
+				{
+					tryExtractAdress(resultObject, "locality");
+				}
 			}
-
-			_data = new ResultMap();
-			List<Object> valueList = new ArrayList<>();
-			valueList.add(districtName);
-			valueList.add(address);
-
-			_data.put(ResultMap.FULL_ADDRESS_KEY, valueList);
 		}
 		catch (Exception e)
 		{
@@ -82,6 +72,40 @@ public class GoogleGeocodingResource extends SingleWebResource
 			}
 		}
 
+	}
+
+	private boolean tryExtractAdress(JsonObject resultObject, String sublocalKey)
+	{
+		outerloop: for ( JsonElement componentPrimitive : resultObject.getAsJsonArray("results") )
+		{
+			JsonObject componentObj = componentPrimitive.getAsJsonObject();
+
+			if ( componentObj.get("types").getAsJsonArray().contains(new JsonPrimitive(sublocalKey)) )
+			{
+				for ( JsonElement primitiveAdress : componentObj.get("address_components").getAsJsonArray() )
+				{
+					JsonObject adressObject = primitiveAdress.getAsJsonObject();
+
+					if ( adressObject.get("types").getAsJsonArray().contains(new JsonPrimitive(sublocalKey)) )
+					{
+						String districtName = adressObject.get("long_name").getAsString();
+
+						String address = resultObject.getAsJsonArray("results").get(0).getAsJsonObject()
+						        .getAsJsonPrimitive("formatted_address").getAsString();
+
+						_data = new ResultMap();
+						List<Object> valueList = new ArrayList<>();
+						valueList.add(districtName);
+						valueList.add(address);
+
+						_data.put(ResultMap.FULL_ADDRESS_KEY, valueList);
+						break outerloop;
+					}
+				}
+			}
+		}
+
+		return (_data != null);
 	}
 
 }
