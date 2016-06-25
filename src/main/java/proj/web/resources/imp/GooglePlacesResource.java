@@ -59,6 +59,8 @@ public class GooglePlacesResource extends SingleWebResource
 
 		for ( String keyword : KEYWORDS )
 		{
+			int counter = 0;
+			
 			String nextPageToken = "";
 			ByteArrayOutputStream out = null;
 			try
@@ -114,7 +116,8 @@ public class GooglePlacesResource extends SingleWebResource
 	}
 
 	private void writeResultsToModel(JsonArray resultsArray, String keyword)
-	{
+	{		
+		int counter = 0;
 		for ( Object placeEntry : resultsArray )
 		{
 
@@ -123,7 +126,7 @@ public class GooglePlacesResource extends SingleWebResource
 			if ( placeEntryMap != null )
 			{
 				String id = IdGenerator.generateMd5Id(placeEntryMap.get("lat"), placeEntryMap.get("lng"));
-				Resource storeModel = _model.createResource(StaticProperties.NAMESPACE_STORE + "=" + id);
+				Resource storeModel = _model.createResource(StaticProperties.NAMESPACE_STORE + "-" + id);
 
 				// new entry
 				if ( placeEntryMap.get("adress") != null && placeEntryMap.get("district") != null )
@@ -143,6 +146,7 @@ public class GooglePlacesResource extends SingleWebResource
 
 					CoordList.getInstance().addNewStoreLocation(Double.valueOf(placeEntryMap.get("lat")),
 					        Double.valueOf(placeEntryMap.get("lng")));
+					counter++;
 				}
 				else
 				{
@@ -151,6 +155,8 @@ public class GooglePlacesResource extends SingleWebResource
 				}
 			}
 		}
+		
+		LOGGER.info("Processing finished: " + counter + " new results found!");
 	}
 
 	private List<Object> searchFullAdress(double lat, double lng)

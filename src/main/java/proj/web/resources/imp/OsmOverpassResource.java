@@ -16,16 +16,18 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import proj.data.location.CoordList;
-import proj.data.location.Coordinates;
 import proj.data.IdGenerator;
 import proj.data.ResultMap;
 import proj.data.StaticProperties;
+import proj.data.location.CoordList;
+import proj.data.location.Coordinates;
 import proj.web.resources.SingleWebResource;
 import proj.web.workflow.WorkflowInterruptedException;
 
@@ -39,6 +41,8 @@ public class OsmOverpassResource extends SingleWebResource
 	private final static String[]	KEYWORDS	=
 	{ "[shop=supermarket][organic=only]", "[shop=supermarket]", "[shop=supermarket][organic=yes]",
 	        "[shop=convenience][organic=yes]", "[shop=convenience][organic=only]" };
+	
+	private static final Logger		LOGGER		= LoggerFactory.getLogger(OsmOverpassResource.class);
 
 	public OsmOverpassResource(Model model)
 	{
@@ -50,10 +54,14 @@ public class OsmOverpassResource extends SingleWebResource
 	{
 		for ( String keyword : KEYWORDS )
 		{
+			int counter = 0;
+			
 			try
 			{
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				executePostRequest(URL, out, String.format(POST_BODY, keyword));
+				
+				LOGGER.info("Request executed: " + keyword);
 
 				List<Map<String, String>> resultList = readXmlFile(out.toByteArray());
 
@@ -67,7 +75,7 @@ public class OsmOverpassResource extends SingleWebResource
 					{
 						String id = IdGenerator.generateMd5Id(coordPair.getLat().toString(),
 						        coordPair.getLng().toString());
-						Resource storeResource = _model.createResource(StaticProperties.NAMESPACE_STORE + "=" + id);
+						Resource storeResource = _model.createResource(StaticProperties.NAMESPACE_STORE + "-" + id);
 						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORETYPE), keyword);
 					}
 					else
@@ -75,7 +83,8 @@ public class OsmOverpassResource extends SingleWebResource
 						String district = result.get("district");
 						String id = IdGenerator.generateMd5Id(latString, lngString);
 
-						Resource storeResource = _model.createResource(StaticProperties.NAMESPACE_STORE + "=" + id);
+						Resource storeResource = _model.createResource(StaticProperties.NAMESPACE_STORE + "-" + id);
+						
 						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_NAME),
 						        result.get("name"));
 						storeResource.addProperty(_model.createProperty(StaticProperties.NAMESPACE_ADRESS),
@@ -88,11 +97,12 @@ public class OsmOverpassResource extends SingleWebResource
 
 						_model.getResource(StaticProperties.NAMESPACE_DISTRICT + "=" + district)
 						        .addProperty(_model.createProperty(StaticProperties.NAMESPACE_STORE), storeResource);
+						counter++;
 					}
 				}
-
+				LOGGER.info("Processing finished: " + counter + " new results found!");
 				// remove when continue development
-				break;
+				//break;
 			}
 			catch (Exception e)
 			{
@@ -106,7 +116,7 @@ public class OsmOverpassResource extends SingleWebResource
 
 	private List<Map<String, String>> readXmlFile(byte[] bytesOfString)
 	        throws ParserConfigurationException, SAXException, IOException, WorkflowInterruptedException
-	{
+	{	
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dbuilder = dbFactory.newDocumentBuilder();
 
@@ -118,7 +128,7 @@ public class OsmOverpassResource extends SingleWebResource
 		List<Map<String, String>> resultList = new ArrayList<>();
 
 		for ( int i = 0; i < nodes.getLength(); i++ )
-		{
+		{			
 			Map<String, String> storeInfoMap = new HashMap<>();
 
 			Node locationNode = nodes.item(i);
@@ -141,11 +151,6 @@ public class OsmOverpassResource extends SingleWebResource
 				storeInfoMap.put("adress", fullAdress);
 				String district = resultMap.get(ResultMap.FULL_ADDRESS_KEY).get(0).toString();
 				storeInfoMap.put("district", district);
-
-				if ( district.contains(",") )
-				{
-					System.out.println("here");
-				}
 			}
 
 			for ( int j = 0; j < locationProperties.getLength(); j++ )
