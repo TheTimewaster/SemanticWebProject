@@ -42,7 +42,7 @@ WHERE {
 }
 GROUP BY ?name ?rent ?storename
 
-// get all discounters - 84 Entries
+// get all discounters - 71 Entries
 PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
 
 SELECT ?name ?rent ?storename (group_concat(?type) as ?types)
@@ -58,7 +58,7 @@ WHERE {
 }
 GROUP BY ?name ?rent ?storename
 
-// get all supermarkets - 46 Entries
+// get all supermarkets - 47 Entries
 PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
 
 SELECT ?name ?rent ?storename (group_concat(?type) as ?types)

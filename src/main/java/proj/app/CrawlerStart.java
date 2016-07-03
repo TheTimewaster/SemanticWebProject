@@ -2,7 +2,7 @@ package proj.app;
 
 import proj.web.workflow.WorkflowController;
 
-public class Main
+public class CrawlerStart
 {	
 	public static void main(String[] args)
 	{
