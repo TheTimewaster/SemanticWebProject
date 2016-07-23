@@ -73,3 +73,50 @@ WHERE {
   	FILTER (regex(?storename, ".*EDEKDA.*", "i") || regex(?storename, ".*KONSUM.*", "i") || regex(?storename, ".*REWE.*", "i") || regex(?storename, ".*Kaufland.*", "i"))
 }
 GROUP BY ?name ?rent ?storename
+
+// count and group
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent (COUNT(?store) AS ?stores)
+WHERE {
+  ?district thoangth:name ?name.
+  ?district thoangth:rent ?rent.
+  ?district thoangth:store ?store.
+  ?store thoangth:name ?storename.
+  FILTER (regex(?storename, ".*ALDI.*", "i") || regex(?storename, ".*NETTO.*", "i") || regex(?storename, ".*LIDL.*", "i") || regex(?storename, ".*PENNY.*", "i"))
+}
+GROUP BY ?name ?rent
+ORDER BY ?rent
+
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent (COUNT(?store) AS ?stores)
+WHERE {
+  ?district thoangth:name ?name.
+  ?district thoangth:rent ?rent.
+  ?district thoangth:store ?store.
+  ?store thoangth:storetype ?type.
+  FILTER (regex(?type, ".*organic.*") || regex(?type, ".*bio.*"))
+}
+GROUP BY ?name ?rent
+ORDER BY ?rent
+
+PREFIX thoangth: <http://www.imn.htwk-leipzig.de/thoangth#>
+
+SELECT ?name ?rent (COUNT(?store) AS ?stores)
+{
+  ?district thoangth:name ?name.
+  ?district thoangth:rent ?rent.
+  ?district thoangth:store ?store.
+  {
+    SELECT ?store (group_concat(?type) as ?types)
+    WHERE {
+      ?store thoangth:name ?storename.
+      ?store thoangth:storetype ?type.
+      ?store thoangth:name ?storename.
+      FILTER (regex(?type, ".*organic.*") || regex(?type, ".*bio.*"))
+    }
+    GROUP BY ?store
+  }
+}
+GROUP BY ?name ?rent
